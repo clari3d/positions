@@ -1,6 +1,7 @@
 # Position --- cyclic cursor position managed
 
-Position is an Emacs extension that allows to store the current cursor position in a ring and to jump to the stored position in a cyclic way.
+Position is an Emacs extension that allows to store the current cursor position
+in a ring and to jump to the stored position in a cyclic way.
 
 # Instalation
 
@@ -14,7 +15,8 @@ Clone the repository somewhere:
 $ cd /tmp
 $ git clone https://github.com/clari3d/positions.el.git
 
-Copy the file /tmp/positions.el/position.el in the direcotry where emacs stores the extensions:
+Copy the file /tmp/positions.el/position.el in the direcotry where emacs stores
+the extensions:
 
 $ cp /tmp/positions.el/position.el ~/.emacs.d/site-lisp
 
@@ -29,7 +31,8 @@ Clone the repository somewhere:
 $ cd /tmp
 $ git clone https://github.com/clari3d/positions.el.git
 
-Copy the file /tmp/positions.el/position.el in the directory where emacs stores the extensions:
+Copy the file /tmp/positions.el/position.el in the directory where emacs stores
+the extensions:
 
 $ cp /tmp/positions.el/position.el ~/.emacs.d/
 
@@ -45,7 +48,8 @@ To be continued...
 
 ## Register the extension
 
-Once the file is installed, register it if the .emacs: Add (require 'position) in your .emacs file.
+Once the file is installed, register it if the .emacs: Add (require 'position)
+in your .emacs file.
 
 # Usage
 
@@ -62,3 +66,9 @@ The key binding is:
 - C-xjr: remove all the stored positions
 - C-xjs: store the current cursor position
 - C-xjl: list all the positions"
+
+
+# Author
+
+Positions is edited by Clari3D (https://www.clari3d.com) thats also edits the famous
+Clari3D viewer for Linux, Macos, Windows and Web.

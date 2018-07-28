@@ -1,13 +1,13 @@
-# Position --- cyclic cursor position managed
+# Positions --- cyclic cursor positions manager
 
-Position is an Emacs extension that allows to store the current cursor position
-in a ring and to jump to the stored position in a cyclic way.
+Positions is an Emacs extension that allows to store the current cursor position
+in a ring and to jump to the stored positions in a cyclic way.
 
 # Instalation
 
 ## Install the extension
 
-Position is hosted in GitHub at
+Positions is hosted in GitHub at
 [github.com/clari3d/positions.el.git](https://github.com/clari3d/positions.el.git).
 
 ### Linux
@@ -16,14 +16,14 @@ Clone the repository somewhere:
 $ cd /tmp
 $ git clone https://github.com/clari3d/positions.el.git
 
-Copy the file /tmp/positions.el/position.el in the direcotry where emacs stores
+Copy the file /tmp/positions.el/positions.el in the direcotry where emacs stores
 the extensions:
 
-$ cp /tmp/positions.el/position.el ~/.emacs.d/site-lisp
+$ cp /tmp/positions.el/positions.el ~/.emacs.d/site-lisp
 
-or copy it in the shared emacs extensions
+or copy it in the shared emacs extensions directory:
 
-$ cp /tmp/positions.el/position.el /usr/share/emacs/site-lisp
+$ cp /tmp/positions.el/positions.el /usr/share/emacs/site-lisp
 
 
 ### Macos
@@ -32,14 +32,14 @@ Clone the repository somewhere:
 $ cd /tmp
 $ git clone https://github.com/clari3d/positions.el.git
 
-Copy the file /tmp/positions.el/position.el in the directory where emacs stores
+Copy the file /tmp/positions.el/positions.el in the directory where emacs stores
 the extensions:
 
-$ cp /tmp/positions.el/position.el ~/.emacs.d/
+$ cp /tmp/positions.el/positions.el ~/.emacs.d/
 
-or copy it in the shared emacs extensions
+or copy it in the shared emacs extensions directory:
 
-$ cp /tmp/positions.el/position.el /Applications/Emacs.app/Contents/Resources/site-lisp
+$ cp /tmp/positions.el/positions.el /Applications/Emacs.app/Contents/Resources/site-lisp
 
 
 ### Windows
@@ -49,12 +49,12 @@ To be continued...
 
 ## Register the extension
 
-Once the file is installed, register it if the .emacs: Add (require 'position)
+Once the file is installed, register it in the .emacs: Add (require 'positions)
 in your .emacs file.
 
 # Usage
 
-Position is a global minor mode. In order to activate the extension type:
+Positions is a global minor mode. In order to activate the extension type:
 
 M-x position-mode
 

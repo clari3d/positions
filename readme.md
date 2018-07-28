@@ -7,7 +7,8 @@ in a ring and to jump to the stored position in a cyclic way.
 
 ## Install the extension
 
-Position is hosted in GitHub at https://github.com/clari3d/positions.el.git
+Position is hosted in GitHub at
+[github.com/clari3d/positions.el.git](https://github.com/clari3d/positions.el.git).
 
 ### Linux
 
@@ -70,5 +71,5 @@ The key binding is:
 
 # Author
 
-Positions is edited by Clari3D (https://www.clari3d.com) thats also edits the famous
-Clari3D viewer for Linux, Macos, Windows and Web.
+Positions is edited by Clari3D [www.clari3d.com](https://www.clari3d.com) thats
+also edits the famous Clari3D viewer for Linux, Macos, Windows and Web.

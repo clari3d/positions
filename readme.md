@@ -1,4 +1,4 @@
-# Positions --- cyclic cursor positions manager
+# Positions --- cyclic cursor positions manager for Emacs
 
 Positions is an Emacs extension that allows to store the current cursor position
 in a ring and to jump to the stored positions in a cyclic way.

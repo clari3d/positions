@@ -1,5 +1,5 @@
 ;; position.el --- cyclic cursor position managed
-;; Copytight (c) 2017 Andéor, SAS
+;; Copytight (c) 2017 to 2018 Andéor, SAS
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -51,182 +51,214 @@
 ;;
 ;; - define a minor mode - ok
 ;; - allow to work in text mode - ok
-;; - handle deleted buffers
+;; - handle deleted buffers - ok
 ;;
- 
+
 ;; version of the extension
 (defconst positions/version "0.1")
- 
+
 ;; description of the positions mode
 (defgroup positions nil
   "Store and retrieve positions in the buffers."
   :tag   "Positions"
   :group 'convenience
   :group 'fill)
- 
+
 ;; color to use in order to hilight the stored position in text mode                                        ;
 (defcustom positions-color "#ddf"
   "Color used to draw the stored lines in terminal mode."
   :group 'positions
   :tag   "Positions color"
   :type  'color)
- 
+
 ;; force text mode boolean
 (defcustom positions-text-mode nil
   "Force text mode."
   :group 'positions
   :tag   "Positions text mode"
   :type  'boolean)
- 
+
 ;; list of stored positions - a position is a pair of a buffer and a line number
 (setq positions-locations '())
- 
+
 ;; list of the position overlays
 (setq positions-overlays  '())
- 
+
 ;; index of the current position in the list of positions
 (setq positions-current   0)
- 
+
 ;; retrieve the index of an element in a list
 ;; @param object: the object to retrieve
 ;; @param list: the list where to search for the element
 ;; @return integer or nil: the index or nill if not found
 (defun position-index (object list)
-"return the index of object in list"
-(if (not list)
-     nil
-   (if (equal object (car list))
+  "return the index of object in list"
+  (if (not list)
+      nil
+    (if (equal object (car list))
         0
-     (let ((position (position-index object (cdr list))))
+      (let ((position (position-index object (cdr list))))
         (if position
             (+ position 1)
           nil)))))
- 
+
+;; delete a stored position by its index
+;; @param index: the position index in the list
+;; @return void
+(defun positions-delete (index)
+  (let (;; get the location and the overlay
+        (location (nth index positions-locations))
+        (overlay  (nth index positions-overlays)))
+    (when location
+      ;; message
+      (message "delete position %s:%d" (car location) (cdr location))
+      ;; delete the overlay
+      (delete-overlay overlay)
+      ;; remove the overlay from the list of overlays
+      (setq positions-overlays  (delete overlay positions-overlays))
+      ;; remove the position from the list
+      (setq positions-locations (delete location positions-locations)))))
+
 ;; add or remove the current psition where the text cursor is in or from the
 ;; list of positions: if the current position is not in the list, it is added and
 ;; if it is in the list, it is removed
 ;; @return void
 (defun positions-set ()
-"add/remove the current cursor position in/from the position list"
-(letrec ((org      (point))
-          (end      (progn (end-of-line) (point)))
-          (pos      (progn (beginning-of-line) (point)))
-          (position (cons (current-buffer) (line-number-at-pos))))
-   ;; if the position is in the list
-   (if (member position positions-locations)
-       ;; it is removed
-        (progn
-          (message "delete position %s:%d" (car position) (cdr position))
-          (letrec (;; get the index of the position in the list
-                   (index   (position-index position positions-locations))
-                   ;; get the corresponding overlay
-                   (overlay (nth index positions-overlays)))
-            ;; delete the overlay
-            (delete-overlay overlay)
-            ;; remove the overlay from the list of overlays
-            (setq positions-overlays  (delete overlay  positions-overlays)))
-          ;; remove the position from the list
-          (setq positions-locations (delete position positions-locations)))
-     ;; otherwise, it is added
-     (progn
-       (message "add position %s:%d" (car position) (cdr position))
-       (let (;; create the overlay
-             (overlay (make-overlay pos (if (display-images-p) pos end))))
-         ;; in graphic mode
-         (if (and (not positions-text-mode) (display-images-p))
-             ;; add the indicator in the fringe
-             (overlay-put overlay
-                          'before-string
-                          (propertize "A"
-                                      'display '(left-fringe
-                                                 filled-rectangle)))
-           ;; otherwise change the text background
-           (overlay-put overlay 'face `(:background ,positions-color)))
-         ;; add the overlay in the list of overlay
-         (setq positions-overlays  (cons overlay positions-overlays)))
-       ;; add the position in the list of positions
-       (setq positions-locations (cons position positions-locations))))))
- 
+  "add/remove the current cursor position in/from the position list"
+  (letrec ((org      (point))
+           (end      (progn (end-of-line) (point)))
+           (pos      (progn (beginning-of-line) (point)))
+           (location (cons (current-buffer) (line-number-at-pos))))
+    ;; if the position is in the list
+    (if (member location positions-locations)
+        ;; it is removed
+        (let (;; get the index of the position in the list
+              (index (position-index location positions-locations)))
+          (positions-delete index))
+      ;; otherwise, it is added
+      (progn
+        (message "add position %s:%d" (car location) (cdr location))
+        (let (;; create the overlay
+              (overlay (make-overlay pos (if (display-images-p) pos end))))
+          ;; in graphic mode
+          (if (and (not positions-text-mode) (display-images-p))
+              ;; add the indicator in the fringe
+              (overlay-put overlay
+                           'before-string
+                           (propertize "A"
+                                       'display '(left-fringe
+                                                  filled-rectangle)))
+            ;; otherwise change the text background
+            (overlay-put overlay 'face `(:background ,positions-color)))
+          ;; add the overlay in the list of overlay
+          (setq positions-overlays  (cons overlay positions-overlays)))
+        ;; add the position in the list of positions
+        (setq positions-locations (cons location positions-locations))))))
+
 ;; jump to the current position (in positions-current) with name as action name
 ;; @param name: the name of the action,
 ;; @return void
 (defun positions-jump (name)
-"jump to the current position"
-(let (;; get the number of elements in the positions list
-       (len (length positions-locations)))
-   ;; if there is some positions
-   (when (> len 0)
-     (let (;; get the index of the current position
-           (position (nth positions-current positions-locations)))
+  "jump to the current position"
+  (let (;; get the number of elements in the positions list
+        (len (length positions-locations)))
+    ;; if there is some positions
+    (when (> len 0)
+      (let (;; get the index of the current position
+            (position (nth positions-current positions-locations)))
         (message "jump to the %s position %s:%d"
                  name (car position) (cdr position))
         ;; activete the buffer in the position
         (switch-to-buffer (car position))
         ;; goto the line of the position
         (goto-line (cdr position))))))
- 
+
 ;; jump to the next position
 ;; @return void
 (defun positions-next ()
-"jump to the next position in the position list"
-(let (;; get the number of elements in the positions list
-       (len (length positions-locations)))
-   ;; if there is some elements
-   (when (> len 0)
-     ;; increment the current position recycling to zero
-     (setq positions-current (+ positions-current 1))
-     (when (>= positions-current len)
-       (setq positions-current 0))
-     ;; jump to the new current position
-     (positions-jump "next"))))
- 
+  "jump to the next position in the position list"
+  (let (;; get the number of elements in the positions list
+        (len (length positions-locations)))
+    ;; if there is some elements
+    (when (> len 0)
+      ;; increment the current position recycling to zero
+      (setq positions-current (+ positions-current 1))
+      (when (>= positions-current len)
+        (setq positions-current 0))
+      ;; jump to the new current position
+      (positions-jump "next"))))
+
 ;; jump to the previous position
 ;; @return void
 (defun positions-previous ()
-"jump to the previous position in the position list"
-(let (;; get the number of psition in the positions list
-       (len (length positions-locations)))
-   ;; if there is some positions
-   (when (> len 0)
-     ;; change the current position, recycligin to zero
-     (setq positions-current (- positions-current 1))
-     (when (< positions-current 0)
-       (setq positions-current (- len 1)))
-     ;; jump to the new current position
-     (positions-jump "previous"))))
- 
+  "jump to the previous position in the position list"
+  (let (;; get the number of psition in the positions list
+        (len (length positions-locations)))
+    ;; if there is some positions
+    (when (> len 0)
+      ;; change the current position, recycligin to zero
+      (setq positions-current (- positions-current 1))
+      (when (< positions-current 0)
+        (setq positions-current (- len 1)))
+      ;; jump to the new current position
+      (positions-jump "previous"))))
+
 ;; remove all the stored positions
 ;; @return void
 (defun positions-reset ()
-"delete all the positions"
-(message "reset all the positions-locations");
-;; delete all the overlay
-(dolist (overlay positions-overlays)
-   (delete-overlay overlay))
-;; reset the list and indexes
-(setq positions-overlays  '())
-(setq positions-current 0)
-(setq positions-locations '()))
- 
+  "delete all the positions"
+  (message "reset all the positions-locations");
+  ;; delete all the overlay
+  (dolist (overlay positions-overlays)
+    (delete-overlay overlay))
+  ;; reset the list and indexes
+  (setq positions-overlays  '())
+  (setq positions-current 0)
+  (setq positions-locations '()))
+
 ;; list all the stored positions
 ;; @return void
 (defun positions-list ()
-"list all the positions"
-(message "list all the positions");
-(let (;; intialize the multi-lines message
-       (msg ""))
-   ;; for all the positions stored in the list of positions
-   (dolist (position positions-locations)
-     ;; append the current position to the multi-line message
-     (setq msg (format "%sposition %s:%d\n"
-                       msg
-                       (car position) (cdr position))))
-   ;; display the message
-   (message (format "%sThere is %d positions"
-                    msg (length positions-locations)))))
- 
+  "list all the positions"
+  (message "list all the positions");
+  (let (;; intialize the multi-lines message
+        (msg ""))
+    ;; for all the positions stored in the list of positions
+    (dolist (position positions-locations)
+      ;; append the current position to the multi-line message
+      (setq msg (format "%sposition %s:%d\n"
+                        msg
+                        (car position) (cdr position))))
+    ;; display the message
+    (message (format "%sThere is %d positions"
+                     msg (length positions-locations)))))
+
+;; boolean variable that reflects the position status
 (defvar positions-mode nil)
- 
+
+;; return the index of a buffer in the stored locations
+;; buffer-name: the buffer to retrieve
+;; @return integer or nil: the index or nil
+(defun positions-index-of-buffer (buffer-name)
+  (if buffer-name
+      (catch 'ret
+        (let ((index 0))
+          (dolist (location positions-locations)
+            (if (string= buffer-name (buffer-file-name (car location)))
+                (throw 'ret index)
+              (setq index (+ index 1))))
+          nil))
+    nil))
+
+;; buffer kill hook
+;; @return void
+(defun positions-kill-buffer-hook ()
+  (let (;; get the index of the buffer to delete
+        (index (positions-index-of-buffer buffer-file-name)))
+    (when index
+      ;; delete the position
+      (positions-delete index))))
+
 ;; toggle the positions mode
 ;; @return void
 (defun positions-mode-toggle ()
@@ -251,17 +283,21 @@
                                  (positions-list))))))
     ;; if the mode is currently on
     (if positions-mode
-        ;; bind all the keys of the extension
-        (dolist (binding bindings)
-          (global-set-key (car binding) (cadr binding)))
+        (progn
+          ;; add the hook on buffer kill
+          (add-hook 'kill-buffer-hook 'positions-kill-buffer-hook)
+          ;; bind all the keys of the extension
+          (dolist (binding bindings)
+            (global-set-key (car binding) (cadr binding))))
       ;; if the mode is off
       (progn
+        ;; remove the hook on buffer kill
         ;; remove all the key bindings
         (dolist (binding bindings)
           (global-set-key (car binding) nil))
         ;; remove all the positions
-               (positions-reset)))))
- 
+        (positions-reset)))))
+
 ;; autoload position mode
 ;;;###autoload
 (define-minor-mode positions-mode
@@ -279,6 +315,6 @@ C-xjl: list all the positions"
   :global     t
   :group      'position
   (positions-mode-toggle))
- 
+
 ;; provide the extension
 (provide 'positions)

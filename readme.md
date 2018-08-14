@@ -63,7 +63,7 @@ The key binding is:
 - C-x j p: switch to the previous position, if any
 - C-x j r: remove all the stored positions
 - C-x j s: store the current cursor position
-- C-x j l: list all the positions"
+- C-x j l: list all the positions
 
 
 # Author

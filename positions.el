@@ -45,6 +45,8 @@
 ;; - C-xjr: remove all the stored positions
 ;; - C-xjs: store the current cursor position
 ;; - C-xjl: list all the positions"
+;; - C-xjt: store all the position in a file
+;; - C-xjo: resstore all the position from a file
 ;;
 ;;
 ;; # Todo
@@ -54,8 +56,14 @@
 ;; - handle deleted buffers - ok
 ;;
 
+
+;; v a r i a b l e s
+
 ;; version of the extension
-(defconst positions/version "0.1")
+(defconst positions/version "0.2")
+
+;; boolean variable that reflects the position status
+(defvar positions-mode nil)
 
 ;; description of the positions mode
 (defgroup positions nil
@@ -86,6 +94,9 @@
 
 ;; index of the current position in the list of positions
 (setq positions-current   0)
+
+
+;; u t i l i t i e s
 
 ;; retrieve the index of an element in a list
 ;; @param object: the object to retrieve
@@ -173,6 +184,55 @@
         ;; goto the line of the position
         (goto-line (cdr position))))))
 
+
+;; write all the stored positions in a file
+;; @param filename: the file name to use
+;; @return void
+(defun positions-write (filename)
+  "save all the positions in a filename"
+  (message "save all the positions-locations in %s" filename)
+  ;; delete the file
+  (delete-file filename)
+  ;; make it empty
+  (write-region "(\n" "" filename)
+  ;; for all the positions stored in the list of positions
+  (dolist (position positions-locations)
+    ;; append the current position to the file
+    (append-to-file (format "  (\"%s\" . %d)\n" (car position) (cdr position))
+                    nil filename))
+  (append-to-file ")\n" nil filename))
+
+;; read and append all the stored positions from a file
+;; @param filename: the file name to use
+;; @return void
+(defun positions-read (filename)
+  "read all the positions from a filename"
+  ;; message
+  (message "read all the positions-locations from %s" filename)
+  ;; remove all the existing positions
+  (positions-reset)
+
+  (letrec ((input   (find-file-noselect filename))
+           (content (read input)))
+    (message "%s" content)))
+
+;; return the index of a buffer in the stored locations
+;; buffer-name: the buffer to retrieve
+;; @return integer or nil: the index or nil
+(defun positions-index-of-buffer (buffer-name)
+  (if buffer-name
+      (catch 'ret
+        (let ((index 0))
+          (dolist (location positions-locations)
+            (if (string= buffer-name (buffer-file-name (car location)))
+                (throw 'ret index)
+              (setq index (+ index 1))))
+          nil))
+    nil))
+
+
+;; k e y   b i n d e d   f u n c t i o n s
+
 ;; jump to the next position
 ;; @return void
 (defun positions-next ()
@@ -233,22 +293,36 @@
     (message (format "%sThere is %d positions"
                      msg (length positions-locations)))))
 
-;; boolean variable that reflects the position status
-(defvar positions-mode nil)
+;; store all the stored positions in a file
+;; @param filename: the file name to use
+;; @return void
+(defun positions-store ()
+  "save all the positions in a asked filename "
+  (let (;; get the filename
+        (filename (read-file-name "file name where to write the positions: "
+                                  (expand-file-name "~")
+                                  (expand-file-name "~/positions.dat"))))
+    ;; message
+    (message "save all the positions-locations in %s" filename)
+    ;; write the positions
+    (positions-write filename)))
 
-;; return the index of a buffer in the stored locations
-;; buffer-name: the buffer to retrieve
-;; @return integer or nil: the index or nil
-(defun positions-index-of-buffer (buffer-name)
-  (if buffer-name
-      (catch 'ret
-        (let ((index 0))
-          (dolist (location positions-locations)
-            (if (string= buffer-name (buffer-file-name (car location)))
-                (throw 'ret index)
-              (setq index (+ index 1))))
-          nil))
-    nil))
+;; store all the stored positions in a file
+;; @param filename: the file name to use
+;; @return void
+(defun positions-restore ()
+  "load all the positions from a asked filename "
+  (let (;; get the filename
+        (filename (read-file-name "file name where to read the positions")))
+    ;; if the file is readable
+    (if (file-readable-p filename)
+        ;; read the positions
+        (positions-read filename)
+      ;; on error, message
+      (message "Error: file %s does not exist" filename))))
+
+
+;; h o o k s
 
 ;; buffer kill hook
 ;; @return void
@@ -258,6 +332,9 @@
     (when index
       ;; delete the position
       (positions-delete index))))
+
+
+;; m i n o r   m o d e
 
 ;; toggle the positions mode
 ;; @return void
@@ -280,7 +357,13 @@
                                  (positions-set)))
                     ("\C-xjl", (lambda ()
                                  (interactive)
-                                 (positions-list))))))
+                                 (positions-list)))
+                    ("\C-xjt", (lambda ()
+                                 (interactive)
+                                 (positions-store)))
+                    ("\C-xjo", (lambda ()
+                                 (interactive)
+                                 (positions-restore))))))
     ;; if the mode is currently on
     (if positions-mode
         (progn
@@ -309,7 +392,9 @@ C-xjn: switch to the next position, if any
 C-xjp: switch to the previous position, if any
 C-xjr: remove all the stored positions
 C-xjs: store the current cursor position
-C-xjl: list all the positions"
+C-xjl: list all the positions
+C-xjt: store all the position in a file
+C-xjo: resstore all the position from a file"
   :init-value positions-mode
   :lighter    " Positions"
   :global     t

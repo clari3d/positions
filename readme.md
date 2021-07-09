@@ -7,7 +7,7 @@ Positions is an Emacs extension that allows to store the current cursor position
 ## Install the extension
 
 Positions is hosted in GitHub at
-[github.com/clari3d/positions.el.git](https://github.com/clari3d/positions.el.git).
+[github.com/clari3d/positions](https://github.com/clari3d/positions).
 
 ### Linux
 
